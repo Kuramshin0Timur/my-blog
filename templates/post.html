@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} — {{ site.site_title if site else 'Блог' }}{% endblock %}
+
+{% block content %}
+<article class="post-full">
+    <h1>{{ post.title }}</h1>
+    <div class="post-meta">
+        {{ post.created_at.strftime('%d.%m.%Y %H:%M') }} · {{ post.author.username }}
+        · 👁 {{ post.views }}
+        {% if not post.is_published %}<span class="badge">Черновик</span>{% endif %}
+    </div>
+    {% if post.summary %}<p class="post-summary"><em>{{ post.summary }}</em></p>{% endif %}
+    {% if post.cover_url %}
+        <img class="post-cover-full" src="{{ post.cover_url }}" alt="">
+    {% endif %}
+    <div class="post-body">{{ post.content|safe }}</div>
+</article>
+
+<section class="comments">
+    <h2>Комментарии ({{ post.comments|length }})</h2>
+    {% for c in post.comments|sort(attribute='created_at') %}
+        <div class="comment">
+            <div class="comment-head">
+                <strong>{{ c.author.username }}</strong>
+                <span class="comment-date">{{ c.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <div class="comment-body">{{ c.body }}</div>
+        </div>
+    {% else %}
+        <p class="empty">Пока нет комментариев.</p>
+    {% endfor %}
+
+    {% if current_user.is_authenticated %}
+        <form method="post" action="{{ url_for('add_comment', slug=post.slug) }}" class="comment-form">
+            <textarea name="body" rows="4" required maxlength="2000" placeholder="Комментарий..."></textarea>
+            <button type="submit" class="btn-primary">Отправить</button>
+        </form>
+    {% else %}
+        <p class="empty"><a href="{{ url_for('login', next=request.path) }}">Войдите</a>, чтобы комментировать.</p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ site.site_title if site else 'Блог' }}{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Записи</h1>
+
+{% if not posts %}
+    <p class="empty">Постов пока нет.</p>
+{% endif %}
+
+<div class="post-list">
+    {% for post in posts %}
+        <article class="post-card">
+            {% if post.cover_url %}
+                <a href="{{ url_for('post_detail', slug=post.slug) }}" class="post-cover">
+                    <img src="{{ post.cover_url }}" alt="">
+                </a>
+            {% endif %}
+            <h2><a href="{{ url_for('post_detail', slug=post.slug) }}">{{ post.title }}</a></h2>
+            <div class="post-meta">
+                {{ post.created_at.strftime('%d.%m.%Y %H:%M') }} · {{ post.author.username }}
+                · 👁 {{ post.views }} · 💬 {{ post.comments|length }}
+            </div>
+            {% if post.summary %}
+                <p class="post-summary">{{ post.summary }}</p>
+            {% endif %}
+            <a class="read-more" href="{{ url_for('post_detail', slug=post.slug) }}">Читать →</a>
+        </article>
+    {% endfor %}
+</div>
+
+{% if pagination.pages > 1 %}
+<nav class="pagination">
+    {% if pagination.has_prev %}<a href="{{ url_for('index', page=pagination.prev_num) }}">← Назад</a>{% endif %}
+    <span>Стр. {{ pagination.page }} / {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a href="{{ url_for('index', page=pagination.next_num) }}">Вперёд →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Редактировать' if post else 'Новый пост' }}{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<style>
+    #editor-container { min-height: 340px; background: #fff; }
+    .ql-snow .ql-picker { color: #333; }
+    .ql-editor img { max-width: 100%; }
+    .ql-editor iframe, .ql-editor video { max-width: 100%; }
+    .media-tools { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+    .media-tools button {
+        background: #e5ecfe; color: #0b3a6f; border: 1px solid #c6d3ea;
+        padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+    }
+    .media-tools button:hover { background: #fde7df; border-color: #f15a22; color: #f15a22; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ 'Редактировать пост' if post else 'Новый пост' }}</h1>
+
+<form method="post" class="post-form" id="postForm">
+    <label>Заголовок
+        <input type="text" name="title" required maxlength="200" value="{{ post.title if post else '' }}">
+    </label>
+
+    <label>Краткое описание
+        <input type="text" name="summary" maxlength="300" value="{{ post.summary if post else '' }}">
+    </label>
+
+    <label>Обложка (URL или загрузка файла)
+        <input type="text" name="cover_url" id="coverInput" value="{{ post.cover_url if post else '' }}" placeholder="https://...">
+    </label>
+    <div class="media-tools">
+        <button type="button" onclick="document.getElementById('coverFile').click()">📷 Загрузить обложку</button>
+        <input type="file" id="coverFile" style="display:none" accept="image/*" onchange="uploadCover(this)">
+    </div>
+
+    <label>Текст поста</label>
+    <div id="editor-container">{{ post.content|safe if post else '' }}</div>
+    <input type="hidden" name="content" id="contentInput">
+
+    <div class="media-tools">
+        <button type="button" onclick="document.getElementById('inlineFile').click()">🖼 Вставить изображение / GIF</button>
+        <input type="file" id="inlineFile" style="display:none" accept="image/*" onchange="insertImage(this)">
+        <button type="button" onclick="insertVideoPrompt()">🎬 Вставить видео (URL)</button>
+        <button type="button" onclick="insertEmbedPrompt()">🔗 Вставить ссылку</button>
+    </div>
+
+    <label class="checkbox">
+        <input type="checkbox" name="is_published" {% if not post or post.is_published %}checked{% endif %}>
+        Опубликовать
+    </label>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">Сохранить</button>
+        <a class="btn-outline" href="{{ url_for('dashboard') }}">Отмена</a>
+    </div>
+</form>
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script>
+const quill = new Quill('#editor-container', {
+    theme: 'snow',
+    modules: {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],
+            [{ 'font': [] }],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            [{ 'align': [] }],
+            [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['blockquote', 'code-block'],
+            ['link', 'image', 'video'],
+            ['clean']
+        ]
+    }
+});
+
+// Синхронизируем содержимое перед отправкой
+document.getElementById('postForm').addEventListener('submit', function () {
+    document.getElementById('contentInput').value = quill.root.innerHTML;
+});
+
+// Загрузка обложки
+async function uploadCover(input) {
+    if (!input.files.length) return;
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const res = await fetch("{{ url_for('upload_file') }}", { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.url) document.getElementById('coverInput').value = data.url;
+    else alert('Ошибка: ' + (data.error || 'неизвестно'));
+    input.value = '';
+}
+
+// Вставка изображения в редактор
+async function insertImage(input) {
+    if (!input.files.length) return;
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    const res = await fetch("{{ url_for('upload_file') }}", { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.url) {
+        const range = quill.getSelection(true);
+        quill.insertEmbed(range.index, 'image', data.url, 'user');
+        quill.setSelection(range.index + 1);
+    } else alert('Ошибка: ' + (data.error || 'неизвестно'));
+    input.value = '';
+}
+
+// Вставка видео по URL (YouTube, VK, MP4)
+function insertVideoPrompt() {
+    const url = prompt('Введите URL видео (mp4/webm или ссылка YouTube/VK):');
+    if (!url) return;
+    const range = quill.getSelection(true);
+    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) {
+        quill.clipboard.dangerouslyPasteHTML(
+            range.index,
+            `<video controls src="${url}" style="max-width:100%"></video><p><br></p>`
+        );
+    } else {
+        quill.insertEmbed(range.index, 'video', url, 'user');
+        quill.setSelection(range.index + 1);
+    }
+}
+
+function insertEmbedPrompt() {
+    const url = prompt('URL ссылки:');
+    if (!url) return;
+    const range = quill.getSelection(true);
+    quill.formatText(range.index, range.length, 'link', url);
+}
+</script>
+{% endblock %}

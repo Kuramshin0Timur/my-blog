@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <h1>Вход</h1>
+    <form method="post">
+        <label>Логин или e-mail<input type="text" name="identifier" required autofocus></label>
+        <label>Пароль<input type="password" name="password" required></label>
+        <label class="checkbox"><input type="checkbox" name="remember"> Запомнить меня</label>
+        <button type="submit" class="btn-primary">Войти</button>
+    </form>
+    <p class="auth-alt">Нет аккаунта? <a href="{{ url_for('register') }}">Регистрация</a></p>
+</div>
+{% endblock %}

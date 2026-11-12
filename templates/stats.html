@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<h1 class="page-title">Статистика</h1>
+
+<div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">{{ total_visits }}</div><div class="stat-label">Всего визитов</div></div>
+    <div class="stat-card"><div class="stat-value">{{ logged_visits }}</div><div class="stat-label">Визитов залогиненных</div></div>
+    <div class="stat-card"><div class="stat-value">{{ total_users }}</div><div class="stat-label">Пользователей в БД</div></div>
+    <div class="stat-card"><div class="stat-value">{{ posts_total }}</div><div class="stat-label">Постов</div></div>
+    <div class="stat-card"><div class="stat-value">{{ views_total }}</div><div class="stat-label">Просмотров</div></div>
+    <div class="stat-card"><div class="stat-value">{{ comments_total }}</div><div class="stat-label">Комментариев</div></div>
+</div>
+
+<h2 class="page-title" style="font-size:18px;margin-top:32px;">Последние 30 визитов</h2>
+<table class="posts-table">
+    <thead><tr><th>Когда</th><th>IP</th><th>Пользователь</th><th>User-Agent</th></tr></thead>
+    <tbody>
+        {% for v in recent %}
+        <tr>
+            <td>{{ v.first_seen.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>{{ v.ip or '—' }}</td>
+            <td>
+                {% if v.user_id %}
+                    {% set u = v.user_id and v.user_id %}
+                    <span class="badge badge-success">#{{ v.user_id }}</span>
+                {% else %}
+                    <span class="badge">гость</span>
+                {% endif %}
+            </td>
+            <td style="font-size:11px;color:#6b7688;">{{ v.user_agent[:80] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

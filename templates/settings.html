@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Настройки сайта{% endblock %}
+{% block content %}
+<h1 class="page-title">Настройки сайта</h1>
+
+<form method="post" class="post-form">
+    <label>Название сайта (вкладка и логотип)
+        <input type="text" name="site_title" maxlength="120" value="{{ s.site_title }}">
+    </label>
+
+    <label>Подзаголовок (в шапке, рядом с логотипом)
+        <input type="text" name="site_tagline" maxlength="200" value="{{ s.site_tagline }}">
+    </label>
+
+    <label>Акцентный цвет (кнопки, ховеры, ссылки)
+        <input type="color" name="accent_color" value="{{ s.accent_color }}">
+    </label>
+
+    <label>Текст в футере (нижняя полоса)
+        <input type="text" name="footer_text" maxlength="300" value="{{ s.footer_text }}">
+    </label>
+
+    <label class="checkbox">
+        <input type="checkbox" name="show_visitor_counter" {% if s.show_visitor_counter %}checked{% endif %}>
+        Показывать счётчик посещений в футере
+    </label>
+
+    <div class="form-actions">
+        <button type="submit" class="btn-primary">Сохранить</button>
+    </div>
+</form>
+{% endblock %}
