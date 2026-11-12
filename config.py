@@ -6,14 +6,18 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production-please")
 
-    # Render передаёт DATABASE_URL (внутренний URL PostgreSQL)
-    # Локально, если переменной нет — SQLite
     _db_url = os.environ.get("DATABASE_URL")
 
     if _db_url:
-        # Render иногда отдаёт postgres:// — SQLAlchemy 2.x требует postgresql://
+        # Render может отдавать postgres:// — приводим к postgresql://
         if _db_url.startswith("postgres://"):
             _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+
+        # ВАЖНО: явно указываем драйвер psycopg2,
+        # потому что SQLAlchemy 2.1 по умолчанию ищет psycopg (v3), которого нет
+        if _db_url.startswith("postgresql://"):
+            _db_url = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
         SQLALCHEMY_DATABASE_URI = _db_url
     else:
         SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(BASE_DIR, "blog.db")
