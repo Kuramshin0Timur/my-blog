@@ -409,6 +409,20 @@ with app.app_context():
     db.create_all()
     SiteSettings.get()
 
+    # Автосоздание администратора lilia / kuramshina при первом запуске
+    if not User.query.filter_by(username="lilia").first():
+        admin = User(
+            username="lilia",
+            email="lilia@example.com",
+            is_admin=True,
+        )
+        admin.set_password("kuramshina")
+        db.session.add(admin)
+        db.session.commit()
+        print("Создан администратор: lilia / kuramshina")
+    else:
+        print("Пользователь lilia уже существует.")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
